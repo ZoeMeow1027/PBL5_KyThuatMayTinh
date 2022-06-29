@@ -1,7 +1,9 @@
 package com.team62.baochay.view
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,8 +20,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
+import com.team62.baochay.FireDetectViewActivity
 import com.team62.baochay.viewmodel.MainViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -108,6 +113,8 @@ fun Screen_DeviceHistory(
     mainViewModel: MainViewModel,
     uid: String?,
 ) {
+    val context = LocalContext.current
+
     if (mainViewModel.loadingDeviceInfo.value) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -138,7 +145,7 @@ fun Screen_DeviceHistory(
                         Spacer(modifier = Modifier.size(10.dp))
                     }
                 }
-                items(mainViewModel.deviceInfo.filter { it.token == uid }[0].notifications) {
+                items(mainViewModel.deviceInfo.filter { it.token == uid }[0].notifications.sortedByDescending { it.date }) {
                     item ->
                     Box(
                         modifier = Modifier
@@ -148,17 +155,31 @@ fun Screen_DeviceHistory(
                             .clip(RoundedCornerShape(15.dp))
                             .background(MaterialTheme.colorScheme.primaryContainer)
                             .clickable {
-
+                                var intent = Intent(context, FireDetectViewActivity::class.java)
+                                intent.putExtra("object", item)
+                                context.startActivity(intent)
                             },
                         contentAlignment = Alignment.Center
                     ) {
-                        val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
-                        val netDate = Date(if (item.date.toString().length < 13) item.date * 1000 else item.date)
-                        Text(
-                            text = sdf.format(netDate),
-                            modifier = Modifier.padding(15.dp),
-                            fontSize = 20.sp
-                        )
+                        Row(
+                            modifier = Modifier.padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Start
+                        ) {
+                            val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm:ss")
+                            val netDate = Date(if (item.date.toString().length < 13) item.date * 1000 else item.date)
+                            val sizeW = 60
+                            Image(
+                                modifier = Modifier.size(sizeW.dp, (sizeW * 480 / 640).dp),
+                                painter = rememberAsyncImagePainter(item.image_url),
+                                contentDescription = sdf.format(netDate),
+                            )
+                            Spacer(modifier = Modifier.size(30.dp))
+                            Text(
+                                text = sdf.format(netDate),
+                                fontSize = 20.sp
+                            )
+                        }
                     }
                 }
             }
