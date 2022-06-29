@@ -3,6 +3,7 @@ import threading
 import numpy as np
 from PIL import Image
 import cv2
+import json
 
 import files.fire_detector.detected as fire_detector_detected
 import files.utils as fire_utils
@@ -72,11 +73,13 @@ def FireDetect(frame, pi_mode):
         print('I: Fire detected! Checking physcal device...')
         CAMERA_DETECT = True
 
-    if (room_status['temperature'] >= 35 and
-        room_status['co_detected'] == True and
-        (room_status['flame_detected'] == True or CAMERA_DETECT == True)
-        ):
-        PHYSCAL_DETECT = True
+    if (room_status != None):
+        print(json.dumps(room_status))
+        if (room_status['temperature'] >= 35 and
+            room_status['co_detected'] == True and
+            (room_status['flame_detected'] == True or CAMERA_DETECT == True)
+            ):
+            PHYSCAL_DETECT = True
 
     # This line is only for debugging. Do not add to release code.
     PHYSCAL_DETECT = CAMERA_DETECT
@@ -85,12 +88,12 @@ def FireDetect(frame, pi_mode):
         # TODO: Send to Firebase here!
         # This function needs to be ran with new thread (to release
         # this process for continue detecting another frame)
-        fire_detector_detected.fire_detected(frame)
+        fire_detector_detected.fire_detected(frame, room_status)
 
         if (pi_mode):
             DATETIME_CURRENT = fire_utils.get_current_date_unix()
             if (DATETIME_CURRENT - DATETIME_AFTERNOTIFIED_MAIN > 60):
-                import files.fire_detector.main_physcal as fire_detector_physcal
+                import files.fire_detector.physcal_real as fire_detector_physcal
                 fire_detector_physcal.ToggleBuzzer(True)
                 DATETIME_AFTERNOTIFIED_MAIN = DATETIME_CURRENT
     
@@ -105,11 +108,10 @@ def __fire_detector_physcal__(pi_mode: bool = False):
     while True:
         try:
             if (pi_mode):
-                import files.fire_detector.main_physcal as fire_detector_physcal
-                fire_detector_physcal.FireDetect_Setup()
+                import files.fire_detector.physcal_real as fire_detector_physcal
                 room_status = fire_detector_physcal.FireDetect_Physcal()
             else:
-                import files.fire_detector.main_demo as fire_detecter_demo
+                import files.fire_detector.physcal_demo as fire_detecter_demo
                 room_status = fire_detecter_demo.FireDetect_Demo()
             attempt_physcal_current = 1
         except Exception as ex:
@@ -119,7 +121,7 @@ def __fire_detector_physcal__(pi_mode: bool = False):
             ))
             attempt_physcal_current += 1
             if attempt_physcal_current > attempt_physcal_max:
-                raise Exception("E: Can't get physcal information. Too many attempts. Try again.")
+                raise Exception("E: Can't get physcal information. Too many attempts. Try again.\nMessage: {}".format(ex))
 
 def fire_detector_init(
     camera_fps: int = 15,

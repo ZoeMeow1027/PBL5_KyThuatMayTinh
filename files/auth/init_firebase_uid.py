@@ -11,7 +11,7 @@ def init_firebase_uid_check(uid: str) -> bool:
     else:
         return False
 
-def init_firebase_uid_addnotify(uid: str, date, url: str) -> bool:
+def init_firebase_uid_addnotify(uid: str, date, url: str, physcal_info: dict) -> bool:
     try:
         ref = db.reference('/devices/')
         modal_info = ref.get()
@@ -23,6 +23,7 @@ def init_firebase_uid_addnotify(uid: str, date, url: str) -> bool:
                     {
                         'date': date,
                         'image_url': url,
+                        'physcal_info': physcal_info
                     }
                 )
             ref.set(modal_info)

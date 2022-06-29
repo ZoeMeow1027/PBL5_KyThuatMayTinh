@@ -1,6 +1,7 @@
 import os
 from firebase_admin import storage
 from PIL import Image
+import json
 
 import files.init_settings as fire_init_settings
 import files.utils as fire_utils
@@ -31,6 +32,7 @@ def fire_detected(frame, physcal_info):
         image_pillow.save(FILE_PATH)
 
         # Upload to firebase here!
+        print('I: Uploading to firebase storage...')
         bucket = storage.bucket()
         blob = bucket.blob('fire_image/' + FILE_NAME)
         blob.upload_from_filename(FILE_PATH)
@@ -38,12 +40,12 @@ def fire_detected(frame, physcal_info):
 
         # Get blob public url and save to realtime database
         print('I: Writing to firebase (realtime database)...')
-        firebase_auth_uid.init_firebase_uid_addnotify(DEVICE_UID, DATE_UNIQUE, blob.public_url)
+        firebase_auth_uid.init_firebase_uid_addnotify(DEVICE_UID, DATE_UNIQUE, blob.public_url, physcal_info)
 
         data = {
             "date": str(DATE_UNIQUE),
             "image_url": blob.public_url,
-            "physcal_info": physcal_info
+            "physcal_info": json.dumps(physcal_info)
         }
         CURRENT_DATETIME_UNIX = fire_utils.get_current_date_unix()
         if (CURRENT_DATETIME_UNIX - DATETIME_AFTERNOTIFIED > (60 * 1000)):
