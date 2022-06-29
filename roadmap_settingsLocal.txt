@@ -1,0 +1,5 @@
+
+Settings (local)
+|
+|- firebase_uid: Device registration ID
+|

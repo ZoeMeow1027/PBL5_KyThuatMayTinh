@@ -1,0 +1,1 @@
+Copy your json for auth here and edit file init_firebase_auth.py to locate your json file.

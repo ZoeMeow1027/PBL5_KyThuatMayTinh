@@ -1,0 +1,28 @@
+
+Realtime database
+|
+|- Files
+|  |- Modal
+|     |- dl: Modal download link (zip).
+|     |- md5: Modal hash MD5 from zip.
+|     |- version: Modal version of dl.
+|
+|- Devices
+|  |- (device list)
+|     |- token: Device token
+|     |- name: Device name.
+|     |- user_uid (list): Registered users for access this device.
+|     |- notifications (list): Device notification.
+|        |- date: Date in unix timestamp.
+|        |- image_url: Image with fire detected.
+|        |- user_seen (list): Users who viewed alert.
+|        |- human_detect
+|
+
+Storage: Contains:
+- Modal
+  - Name them with format "modal_{version}.tflite".
+- Image with fire detected
+  - Name them with format "fire_{uid}_{date_unix}.{ext}".
+  - Remember to create access token for use.
+  - Can be jpg, png, bmp,...

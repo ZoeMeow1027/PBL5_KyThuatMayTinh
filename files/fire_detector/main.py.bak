@@ -1,0 +1,122 @@
+
+import threading
+import numpy as np
+import cv2
+
+import files.fire_detector.detected as fire_detector_detected
+
+def fire_detector_init(
+    camera_fps: int = 15,
+    pi_mode: bool = False
+):
+    MODAL_PATH = 'data/modal/detect.tflite'
+    MODAL_LABELMAP_PATH = 'data/modal/labelmap.txt'
+    WINDOW_WIDTH = 1280
+    WINDOW_HEIGHT = 720
+
+    with open(MODAL_LABELMAP_PATH, 'r') as f:
+        MODAL_LABELMAP_CONTENT = [line.strip() for line in f.readlines()]
+    if MODAL_LABELMAP_CONTENT[0] == '???':
+        del(MODAL_LABELMAP_CONTENT[0])
+
+    print('I: Initializing tensorflow-lite modal...')
+    if pi_mode:
+        # For tensorflow-lite
+        import tflite_runtime.interpreter as tflite
+        interpreter = tflite.Interpreter(model_path=MODAL_PATH)
+    else:
+        # For full tensorflow
+        import tensorflow as tf
+        interpreter = tf.lite.Interpreter(model_path=MODAL_PATH)
+
+    interpreter.allocate_tensors()
+    input_details = interpreter.get_input_details()
+    output_details = interpreter.get_output_details()
+    # print(input_details)
+    # print(output_details)
+
+    height = input_details[0]['shape'][1]
+    width = input_details[0]['shape'][2]
+    floating_model = (input_details[0]['dtype'] == np.float32)
+
+    input_mean = 127.5
+    input_std = 127.5
+
+    outname = output_details[0]['name']
+
+    if ('StatefulPartitionedCall' in outname): # This is a TF2 model
+        print('TF2')
+        boxes_idx, classes_idx, scores_idx = 1, 3, 0
+    else: # This is a TF1 model
+        print('TF1')
+        boxes_idx, classes_idx, scores_idx = 0, 1, 2
+
+    # Init video capture
+    # Detect your camera in cv2.VideoCapture(x)
+    cap = cv2.VideoCapture(1)
+    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
+    cap.set(3, WINDOW_WIDTH)
+    cap.set(4, WINDOW_HEIGHT)
+    cap.set(cv2.CAP_PROP_FPS, camera_fps)
+    cap.read()
+    fps = int(cap.get(5))
+    print("I: FPS set in settings (video only):", fps)
+
+    if (cap.isOpened() == False):
+        raise Exception('E: Your camera is used by another process!\nClose all programs use this camera and try again.')
+    while (cap.isOpened()):
+        t1 = cv2.getTickCount()
+
+        ret, frame = cap.read()
+        if not ret:
+            break
+
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame_resized = cv2.resize(frame_rgb, (width, height))
+        input_data = np.expand_dims(frame_resized, axis=0)
+
+        if floating_model:
+            input_data = (np.float32(input_data) - input_mean) / input_std
+
+        interpreter.set_tensor(input_details[0]['index'],input_data)
+        interpreter.invoke()
+
+        boxes = interpreter.get_tensor(output_details[boxes_idx]['index'])[0] # Bounding box coordinates of detected objects
+        classes = interpreter.get_tensor(output_details[classes_idx]['index'])[0] # Class index of detected objects
+        scores = interpreter.get_tensor(output_details[scores_idx]['index'])[0] # Confidence of detected objects
+
+        for i in range(len(scores)):
+            if ((scores[i] > 0.5) and (scores[i] <= 1.0)):
+                # Get bounding box coordinates and draw box
+                # Interpreter can return coordinates that are outside of image dimensions, need to force them to be within image using max() and min()
+                ymin = int(max(1,(boxes[i][0] * WINDOW_HEIGHT)))
+                xmin = int(max(1,(boxes[i][1] * WINDOW_WIDTH)))
+                ymax = int(min(WINDOW_HEIGHT,(boxes[i][2] * WINDOW_HEIGHT)))
+                xmax = int(min(WINDOW_WIDTH,(boxes[i][3] * WINDOW_WIDTH)))
+
+                cv2.rectangle(frame, (xmin,ymin), (xmax,ymax), (10, 255, 0), 2)
+
+                # Draw label
+                object_name = MODAL_LABELMAP_CONTENT[int(classes[i])] # Look up object name from "labels" array using class index
+                label = '%s: %d%%' % (object_name, int(scores[i]*100)) # Example: 'person: 72%'
+                labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2) # Get font size
+                label_ymin = max(ymin, labelSize[1] + 10) # Make sure not to draw label too close to top of window
+                cv2.rectangle(frame, (xmin, label_ymin-labelSize[1]-10), (xmin+labelSize[0], label_ymin+baseLine-10), (255, 255, 255), cv2.FILLED) # Draw white box to put label text in
+                cv2.putText(frame, label, (xmin, label_ymin-7), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2) # Draw label text
+
+                # This function needs to be ran with new thread (to release
+                # this process for continue detecting another frame)
+                fire_detector_detected.fire_detected(frame, human_detect=True)
+
+        t2 = cv2.getTickCount()
+        time1 = (t2-t1)/cv2.getTickFrequency()
+        frame_rate_calc= 1/time1
+        cv2.imshow('Frame', frame)
+        print(frame_rate_calc)
+        if cv2.waitKey(1) == ord('q'):
+            break
+
+    # Release camera and close all windows.
+    cap.release()
+    cv2.destroyAllWindows()
+    pass
