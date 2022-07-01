@@ -7,7 +7,7 @@ import files.utils as firebase_utils
 __FIREBASE_PRIVATE_KEY__ = 'auth/google-services.json'
 
 def init_firebase_auth():
-    print('{time} I: Authenticating firebase...'.format(firebase_utils.get_current_date()))
+    print('{time} I: Authenticating firebase...'.format(time=firebase_utils.get_current_date()))
     # Fetch the service account key JSON file contents
     cred = credentials.Certificate(__FIREBASE_PRIVATE_KEY__)
     # Load firebase configs

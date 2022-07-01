@@ -119,16 +119,16 @@ def __fire_detector_physcal__(pi_mode: bool = False):
                 room_status = fire_detecter_demo.FireDetect_Demo()
             attempt_physcal_current = 1
         except Exception as ex:
-            print('{} W: Can\'t get physcal information. Attempted {}/{}. Retrying...'.format(
-                firebase_utils.get_current_date(),
-                attempt_physcal_current,
-                attempt_physcal_max
+            print('{time} W: Can\'t get physcal information. Attempted {cur}/{max}. Retrying...'.format(
+                time=firebase_utils.get_current_date(),
+                cur=attempt_physcal_current,
+                max=attempt_physcal_max
             ))
             attempt_physcal_current += 1
             if attempt_physcal_current > attempt_physcal_max:
-                raise Exception("{} E: Can't get physcal information. Too many attempts. Try again.\nMessage: {}".format(
-                    firebase_utils.get_current_date(),
-                    ex
+                raise Exception("{time} E: Can't get physcal information. Too many attempts. Try again.\nMessage: {ex}".format(
+                    time=firebase_utils.get_current_date(),
+                    ex=ex
                 ))
 
 def fire_detector_init(
@@ -141,7 +141,7 @@ def fire_detector_init(
     global input_details
     global output_details
 
-    print('{} I: Initializing tensorflow-lite modal...'.format(firebase_utils.get_current_date()))
+    print('{time} I: Initializing tensorflow-lite modal...'.format(time=firebase_utils.get_current_date()))
     if pi_mode:
         # For tensorflow-lite
         import tflite_runtime.interpreter as tflite
@@ -162,7 +162,10 @@ def fire_detector_init(
     cap = cv2.VideoCapture(0)
     cap.set(cv2.CAP_PROP_FPS, camera_fps)
     fps = int(cap.get(5))
-    print(firebase_utils.get_current_date(), " I: FPS set in settings (video only): ", fps)
+    print("{time} I: FPS set in settings (video only): {fps}".format(
+            time=firebase_utils.get_current_date(),
+            fps=fps
+        ))
 
     if (cap.isOpened() == False):
         raise Exception('{time} E: Your camera is used by another process!\nClose all programs use this camera and try again.'.format(time=firebase_utils.get_current_date()))

@@ -33,7 +33,7 @@ def init_firebase_config_createnew() -> dict:
         "storageBucket": "nhom-pbl5.appspot.com"
     }
     print('{time} W: No config found for firebase! Creating one...'.format(time=firebase_utils.get_current_date()))
-    print('{time} W: You need to edit config in {config} for take effect!'.format(config=__FIREBASE_CONFIG_PATH__, time=firebase_utils.get_current_date()))
+    print('{time} W: You need to edit config in {config} for take effect!'.format(time=firebase_utils.get_current_date(), config=__FIREBASE_CONFIG_PATH__))
     open(__FIREBASE_CONFIG_PATH__, 'w').write(json.dumps(FIREBASE_INIT))
     return FIREBASE_INIT
 

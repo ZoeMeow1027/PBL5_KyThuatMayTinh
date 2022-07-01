@@ -7,6 +7,7 @@ from files.utils import *
 
 import files.fire_detector.main as fire_detector_process
 import files.auth.firebase_fcm as firebase_cloud_messaging
+import files.utils as firebase_utils
 
 create_data_folder()
 
@@ -20,11 +21,11 @@ try:
     # Check if device is registered in firebase
     try:
         if (init_firebase_uid_check(DEVICE_SETTINGS['firebase_uid']) == False):
-            raise Exception('Device UID isn\'t exist!\nMay be you aren\'t registered this device?\nRegister device with UID: {uid}'
-                .format(uid=DEVICE_SETTINGS['firebase_uid'])
+            raise Exception('{time} E: Device UID isn\'t exist!\nMay be you aren\'t registered this device?\nRegister device with UID: {uid}'
+                .format(time=firebase_utils.get_current_date(), uid=DEVICE_SETTINGS['firebase_uid'])
             )
         else:
-            print('I: Your deivce is in our firebase.')
+            print('{time} I: Your deivce is in our firebase.'.format(time=firebase_utils.get_current_date()))
     except Exception as ex:
         # print(ex)
         # If not exist uid in server, execute here!

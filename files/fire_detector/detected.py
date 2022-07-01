@@ -47,7 +47,7 @@ def fire_detected(frame, physcal_info):
         data = {
             "date": str(DATE_UNIQUE),
             "image_url": blob.public_url,
-            "physcal_info": json.dumps(physcal_info)
+            "physical_info": json.dumps(physcal_info)
         }
         CURRENT_DATETIME_UNIX = fire_utils.get_current_date_unix()
         if (CURRENT_DATETIME_UNIX - DATETIME_AFTERNOTIFIED > (60 * 1000)):
