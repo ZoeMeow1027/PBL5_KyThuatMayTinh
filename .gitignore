@@ -1,4 +1,6 @@
 # Python virtual environment
-.venv/
-data/
-files/auth/*.json
+.venv/*
+auth/*
+data/*
+files/__pycache__
+files/*/__pycache__

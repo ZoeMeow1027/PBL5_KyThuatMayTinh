@@ -1,3 +1,4 @@
+from datetime import datetime
 import os
 import hashlib
 import uuid
@@ -10,7 +11,7 @@ def create_data_folder():
             os.makedirs('data')
         return
     except Exception as ex:
-        print('E: Failed while creating data folder! Message: {ex}'.format(ex=ex))
+        print('{time} E: Failed while creating data folder! Message: {ex}'.format(ex=ex, time=get_current_date()))
         raise ex
 
 def extract_zip(file_path: str, folder_path: str):
@@ -19,6 +20,9 @@ def extract_zip(file_path: str, folder_path: str):
 
 def chech_md5_from_file(path: str) -> str:
     return hashlib.md5(open(path,'rb').read()).hexdigest()
+
+def get_current_date() -> str:
+    return datetime.now()
 
 def generate_uuid() -> str:
     return str(uuid.uuid4())

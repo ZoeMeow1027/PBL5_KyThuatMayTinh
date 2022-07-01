@@ -1,12 +1,11 @@
 
 import threading
 import numpy as np
-from PIL import Image
 import cv2
 import json
 
 import files.fire_detector.detected as fire_detector_detected
-import files.utils as fire_utils
+import files.utils as firebase_utils
 
 interpreter = None
 input_details = None
@@ -34,7 +33,7 @@ def FireDetect(frame, pi_mode):
     is_running = True
 
     if (pi_mode):
-        if (DATETIME_CURRENT - DATETIME_AFTERNOTIFIED_MAIN > 60):
+        if (DATETIME_CURRENT - DATETIME_AFTERNOTIFIED_MAIN > 60000):
             fire_detector_physcal.ToggleBuzzer(False)
 
     CAMERA_DETECT = False
@@ -55,7 +54,10 @@ def FireDetect(frame, pi_mode):
     # output_details[0]['index'] = the index which provides the input
     output_data = interpreter.get_tensor(output_details[0]['index'])
 
-    print("The output is {}".format(output_data))
+    print("{time} I: The output is {out}".format(
+        out=output_data,
+        time=firebase_utils.get_current_date()
+    ))
     # im = Image.fromarray(frame, 'RGB')
     # im.resize((224, 224))
     # img_array = tf.keras.preprocessing.image.img_to_array(im)
@@ -70,7 +72,9 @@ def FireDetect(frame, pi_mode):
         print(output_data[prediction])
 
         # TODO: Check for physcal here before upload to server!
-        print('I: Fire detected! Checking physcal device...')
+        print('{time} I: Fire detected! Checking physcal device...'.format(
+            time=firebase_utils.get_current_date()
+        ))
         CAMERA_DETECT = True
 
     if (room_status != None):
@@ -91,8 +95,8 @@ def FireDetect(frame, pi_mode):
         fire_detector_detected.fire_detected(frame, room_status)
 
         if (pi_mode):
-            DATETIME_CURRENT = fire_utils.get_current_date_unix()
-            if (DATETIME_CURRENT - DATETIME_AFTERNOTIFIED_MAIN > 60):
+            DATETIME_CURRENT = firebase_utils.get_current_date_unix()
+            if (DATETIME_CURRENT - DATETIME_AFTERNOTIFIED_MAIN > 60000):
                 import files.fire_detector.physcal_real as fire_detector_physcal
                 fire_detector_physcal.ToggleBuzzer(True)
                 DATETIME_AFTERNOTIFIED_MAIN = DATETIME_CURRENT
@@ -115,13 +119,17 @@ def __fire_detector_physcal__(pi_mode: bool = False):
                 room_status = fire_detecter_demo.FireDetect_Demo()
             attempt_physcal_current = 1
         except Exception as ex:
-            print('W: Can\'t get physcal information. Attempted {}/{}. Retrying...'.format(
+            print('{} W: Can\'t get physcal information. Attempted {}/{}. Retrying...'.format(
+                firebase_utils.get_current_date(),
                 attempt_physcal_current,
                 attempt_physcal_max
             ))
             attempt_physcal_current += 1
             if attempt_physcal_current > attempt_physcal_max:
-                raise Exception("E: Can't get physcal information. Too many attempts. Try again.\nMessage: {}".format(ex))
+                raise Exception("{} E: Can't get physcal information. Too many attempts. Try again.\nMessage: {}".format(
+                    firebase_utils.get_current_date(),
+                    ex
+                ))
 
 def fire_detector_init(
     camera_fps: int = 15,
@@ -133,7 +141,7 @@ def fire_detector_init(
     global input_details
     global output_details
 
-    print('I: Initializing tensorflow-lite modal...')
+    print('{} I: Initializing tensorflow-lite modal...'.format(firebase_utils.get_current_date()))
     if pi_mode:
         # For tensorflow-lite
         import tflite_runtime.interpreter as tflite
@@ -154,10 +162,10 @@ def fire_detector_init(
     cap = cv2.VideoCapture(0)
     cap.set(cv2.CAP_PROP_FPS, camera_fps)
     fps = int(cap.get(5))
-    print("I: FPS set in settings (video only):", fps)
+    print(firebase_utils.get_current_date(), " I: FPS set in settings (video only): ", fps)
 
     if (cap.isOpened() == False):
-        raise Exception('E: Your camera is used by another process!\nClose all programs use this camera and try again.')
+        raise Exception('{time} E: Your camera is used by another process!\nClose all programs use this camera and try again.'.format(time=firebase_utils.get_current_date()))
     
     thread_physcal = threading.Thread(target=__fire_detector_physcal__, args=(pi_mode, ))
     thread_physcal.start()

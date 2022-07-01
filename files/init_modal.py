@@ -2,7 +2,7 @@ from firebase_admin import db
 import os
 import requests
 
-from files.utils import *
+import files.utils as firebase_utils
 
 __MODAL_PATH__ = "data/modal.zip"
 __MODAL_VERSION_PATH__ = "data/modal.version"
@@ -26,49 +26,57 @@ def init_modal_version_compare(old_ver: str, new_ver: str) -> bool:
     return result
 
 def init_modal(force_update: bool = False, auto_update: bool = True):
-    print('I: Checking for updates...')
+    print('{time} I: Checking for updates...'.format(
+        time=firebase_utils.get_current_date()
+    ))
     ref = db.reference('/files/modal/')
     # Get information about current modal.
     modal_info = ref.get()
-    print('I: Server modal version: {ver}'.format(ver=modal_info['version']))
+    print('{time} I: Server modal version: {ver}'.format(
+        time=firebase_utils.get_current_date(),
+        ver=modal_info['version']
+    ))
 
     need_update = False
     if (init_modal_exist() == False):
         need_update = True
     else:
         current_ver = open(__MODAL_VERSION_PATH__, 'r').read()
-        print('I: Current modal version: {ver}'.format(ver=current_ver))
+        print('{time} I: Current modal version: {ver}'.format(
+            time=firebase_utils.get_current_date(),
+            ver=current_ver
+        ))
         if (init_modal_version_compare(current_ver, modal_info['version'])):
             need_update = True
 
     if (force_update):
-        print('I: Force update enabled.')
+        print('{time} I: Force update enabled.'.format(time=firebase_utils.get_current_date()))
         need_update = True
     
     if (need_update and auto_update):
-        print('I: Downloading modal...')
+        print('{time} I: Downloading modal...'.format(time=firebase_utils.get_current_date()))
         # Download modal
         response = requests.get(modal_info['dl'])
         if response.status_code != 200:
-            raise Exception('E: Download modal failed!')
+            raise Exception('{time} E: Download modal failed!'.format(time=firebase_utils.get_current_date()))
         # File name and full path
         # Write modal to file
         f = open(__MODAL_PATH__, 'wb')
         f.write(response.content)
         f.close()
-        print('I: Checking MD5 for modal...')
+        print('{time} I: Checking MD5 for modal...'.format(time=firebase_utils.get_current_date()))
         # Check md5
-        if modal_info['md5'] != chech_md5_from_file(__MODAL_PATH__):
-            raise Exception('E: MD5 mismatch!')
+        if modal_info['md5'] != firebase_utils.chech_md5_from_file(__MODAL_PATH__):
+            raise Exception('{time} E: MD5 mismatch!'.format(time=firebase_utils.get_current_date()))
         # Write version to file
         f = open(__MODAL_VERSION_PATH__, 'w')
         f.write(modal_info['version'])
         f.close()
         # Extract file
-        print('I: Extracting modal file...')
-        extract_zip(__MODAL_PATH__, 'data/modal')
-        print('I: Completed downloading model!')
+        print('{time} I: Extracting modal file...'.format(time=firebase_utils.get_current_date()))
+        firebase_utils.extract_zip(__MODAL_PATH__, 'data/modal')
+        print('{time} I: Completed downloading model!'.format(time=firebase_utils.get_current_date()))
     elif auto_update == False:
-        Exception('E: Modal are out of date!')
+        Exception('{time} E: Modal are out of date!'.format(time=firebase_utils.get_current_date()))
     else:
-        print('I: Your current model are up-to-date.')
+        print('{time} I: Your current model are up-to-date.'.format(time=firebase_utils.get_current_date()))
