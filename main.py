@@ -49,7 +49,9 @@ try:
         pi_mode=DEVICE_SETTINGS['pi_mode']
     )
 except Exception as ex:
-    print(ex)
+    print('{time} E: A critical error has occurred and this program must be stopped. Message: {ex}'.format(time=firebase_utils.get_current_date(), ex=ex))
 finally:
     if (DEVICE_SETTINGS['pi_mode']):
+        import files.fire_detector.physcal_real as fire_detector_physcal
         fire_detector_physcal.FireDetect_Release()
+        fire_detector_physcal.ToggleBuzzer(False)

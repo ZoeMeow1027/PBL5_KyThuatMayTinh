@@ -6,6 +6,7 @@ import time
 import json
 
 import files.fire_detector.physcal_demo as fire_detector_physcal_demo
+import files.utils as fire_detector_utils
 
 # MQ-7 - Pin 16
 PIN_MQ7 = 23
@@ -41,7 +42,7 @@ def FireDetect_Physcal():
             result['co_detected'] = False if GPIO.input(PIN_MQ7) != 1 else True
             result['flame_detected'] = False if GPIO.input(PIN_FLAME) != 1 else True
         except Exception as ex:
-            print('W: '.format(ex))
+            print('{time} W: {ex}'.format(time=fire_detector_utils.get_current_date(), ex=ex))
             result = fire_detector_physcal_demo.FireDetect_Demo()
     else:
         result = fire_detector_physcal_demo.FireDetect_Demo()
@@ -55,7 +56,7 @@ def ToggleBuzzer(enabled: bool):
             GPIO.HIGH if enabled else GPIO.LOW
         )
     else:
-        print('W: Physcal components is not initialized!')
+        print('{time} W: Physcal components is not initialized!'.format(time=fire_detector_utils.get_current_date()))
     pass
 
 def FireDetect_Release():

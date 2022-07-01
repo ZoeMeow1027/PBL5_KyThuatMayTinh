@@ -26,14 +26,18 @@ def FireDetect(frame, pi_mode):
     global count_max_alert
     global count_current_alert
     global room_status
+    global DATETIME_AFTERNOTIFIED_MAIN
 
     global is_running
     if (is_running):
         return
     is_running = True
 
+    DATETIME_CURRENT = firebase_utils.get_current_date_unix()
+
     if (pi_mode):
         if (DATETIME_CURRENT - DATETIME_AFTERNOTIFIED_MAIN > 60000):
+            import files.fire_detector.physcal_real as fire_detector_physcal
             fire_detector_physcal.ToggleBuzzer(False)
 
     CAMERA_DETECT = False
@@ -78,15 +82,19 @@ def FireDetect(frame, pi_mode):
         CAMERA_DETECT = True
 
     if (room_status != None):
-        print(json.dumps(room_status))
-        if (room_status['temperature'] >= 35 and
-            room_status['co_detected'] == True and
-            (room_status['flame_detected'] == True or CAMERA_DETECT == True)
+        if (room_status['temperature'] != None and room_status['humidity'] != None):
+            if (
+                room_status['co_detected'] == True and
+                room_status['flame_detected'] == True
             ):
-            PHYSCAL_DETECT = True
+                PHYSCAL_DETECT = True
+        else:
+            import files.fire_detector.physcal_demo as fire_detector_demo
+            room_status['temperature'] = fire_detector_demo.FireDetect_Demo()['temperature']
+            room_status['humidity'] = fire_detector_demo.FireDetect_Demo()['humidity']       
 
     # This line is only for debugging. Do not add to release code.
-    PHYSCAL_DETECT = CAMERA_DETECT
+    # PHYSCAL_DETECT = CAMERA_DETECT
 
     if (PHYSCAL_DETECT):
         # TODO: Send to Firebase here!
@@ -95,7 +103,6 @@ def FireDetect(frame, pi_mode):
         fire_detector_detected.fire_detected(frame, room_status)
 
         if (pi_mode):
-            DATETIME_CURRENT = firebase_utils.get_current_date_unix()
             if (DATETIME_CURRENT - DATETIME_AFTERNOTIFIED_MAIN > 60000):
                 import files.fire_detector.physcal_real as fire_detector_physcal
                 fire_detector_physcal.ToggleBuzzer(True)
