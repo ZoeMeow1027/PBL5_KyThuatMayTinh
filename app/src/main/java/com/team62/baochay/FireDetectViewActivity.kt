@@ -66,7 +66,20 @@ fun Screen_FireAlert(item: DeviceNotification) {
                         text = sdf.format(netDate),
                         style = MaterialTheme.typography.titleLarge
                     )
-                    Spacer(modifier = Modifier.size(10.dp))
+                    Spacer(modifier = Modifier.size(5.dp))
+                    Text(
+                        text = "Temperature: ${item.physcal_info.temperature} C",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = "Humidity: ${item.physcal_info.humidity}%",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = "CO Detected: ${item.physcal_info.co_detected}",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Spacer(modifier = Modifier.size(15.dp))
                     val localWidth = LocalConfiguration.current.screenWidthDp
                     val localHeight = localWidth * 480 / 640
                     Image(

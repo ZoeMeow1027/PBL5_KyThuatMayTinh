@@ -109,8 +109,6 @@ fun MainScreen() {
         },
         content = { contentPadding ->
             Box(modifier = Modifier.padding(contentPadding)) {
-                val d = contentPadding
-
                 when (mainViewModel.loginStatus.value) {
                     LoginStatus.NotLoggedIn -> Screen_Auth(mainViewModel = mainViewModel)
                     LoginStatus.LoggingIn -> Screen_LoggingIn()

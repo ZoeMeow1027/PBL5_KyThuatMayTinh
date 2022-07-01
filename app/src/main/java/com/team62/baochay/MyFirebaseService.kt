@@ -23,9 +23,6 @@ class MyFirebaseService : FirebaseMessagingService() {
         super.onMessageReceived(remoteMessage)
         Log.d(TAG, "Received")
 
-        if (remoteMessage.)
-            return
-
         val title = remoteMessage.notification!!.title
         val text = remoteMessage.notification!!.body
 
