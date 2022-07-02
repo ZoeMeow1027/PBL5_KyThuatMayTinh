@@ -2,4 +2,7 @@
 Settings (local)
 |
 |- firebase_uid: Device registration ID
-|
+|- camera_fps: 
+|- pi_mode:
+|- phone_token:
+

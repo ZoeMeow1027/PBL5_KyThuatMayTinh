@@ -96,7 +96,7 @@ def FireDetect(frame, pi_mode):
     # This line is only for debugging. Do not add to release code.
     # PHYSCAL_DETECT = CAMERA_DETECT
 
-    if (PHYSCAL_DETECT):
+    if (PHYSCAL_DETECT and CAMERA_DETECT):
         # TODO: Send to Firebase here!
         # This function needs to be ran with new thread (to release
         # this process for continue detecting another frame)
@@ -110,33 +110,23 @@ def FireDetect(frame, pi_mode):
     
     is_running = False
 
-attempt_physcal_current = 1
-attempt_physcal_max = 10
 def __fire_detector_physcal__(pi_mode: bool = False):
-    global attempt_physcal_current
-    global attempt_physcal_max
     global room_status
     while True:
-        try:
-            if (pi_mode):
-                import files.fire_detector.physcal_real as fire_detector_physcal
-                room_status = fire_detector_physcal.FireDetect_Physcal()
-            else:
+        if (pi_mode):
+            import files.fire_detector.physcal_real as fire_detector_physcal
+            ATTEMPT_TRIED = 0
+            while (ATTEMPT_TRIED < 15):
+                try:
+                    room_status = fire_detector_physcal.FireDetect_Physcal()
+                except:
+                    ATTEMPT_TRIED += 1
+            if (ATTEMPT_TRIED >= 15):
                 import files.fire_detector.physcal_demo as fire_detecter_demo
                 room_status = fire_detecter_demo.FireDetect_Demo()
-            attempt_physcal_current = 1
-        except Exception as ex:
-            print('{time} W: Can\'t get physcal information. Attempted {cur}/{max}. Retrying...'.format(
-                time=firebase_utils.get_current_date(),
-                cur=attempt_physcal_current,
-                max=attempt_physcal_max
-            ))
-            attempt_physcal_current += 1
-            if attempt_physcal_current > attempt_physcal_max:
-                raise Exception("{time} E: Can't get physcal information. Too many attempts. Try again.\nMessage: {ex}".format(
-                    time=firebase_utils.get_current_date(),
-                    ex=ex
-                ))
+        else:
+            import files.fire_detector.physcal_demo as fire_detecter_demo
+            room_status = fire_detecter_demo.FireDetect_Demo()
 
 def fire_detector_init(
     camera_fps: int = 15,
@@ -177,13 +167,13 @@ def fire_detector_init(
     if (cap.isOpened() == False):
         raise Exception('{time} E: Your camera is used by another process!\nClose all programs use this camera and try again.'.format(time=firebase_utils.get_current_date()))
     
-    thread_physcal = threading.Thread(target=__fire_detector_physcal__, args=(pi_mode, ))
-    thread_physcal.start()
-
     while (cap.isOpened()):
         ret, frame = cap.read()
         if not ret:
             break
+
+        thread_physcal = threading.Thread(target=__fire_detector_physcal__, args=(pi_mode, ))
+        thread_physcal.start()
 
         thread_detect = threading.Thread(target=FireDetect, args=(frame, pi_mode, ))
         thread_detect.start()
