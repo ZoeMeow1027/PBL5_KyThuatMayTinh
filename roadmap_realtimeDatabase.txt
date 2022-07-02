@@ -16,7 +16,7 @@ Realtime database
 |        |- date: Date in unix timestamp.
 |        |- image_url: Image with fire detected.
 |        |- user_seen (list): Users who viewed alert.
-|        |- human_detect
+|        |- physcal_info
 |
 
 Storage: Contains:
